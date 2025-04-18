@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Faturamento JAVA TREINAMENTOS</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* Estilos personalizados */
+        .step-active {
+            border-color: #5D5CDE;
+            background-color: #5D5CDE;
+            color: white;
+        }
+        
+        .step-inactive {
+            border-color: #5D5CDE;
+            color: #5D5CDE;
+        }
+        
+        .dark .step-active {
+            border-color: #5D5CDE;
+            background-color: #5D5CDE;
+            color: white;
+        }
+        
+        .dark .step-inactive {
+            border-color: #5D5CDE;
+            color: #5D5CDE;
+        }
+
+        /* Animação de transição para as abas */
+        .tab-transition {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        
+        .tab-hidden {
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            position: absolute;
+        }
+        
+        .tab-visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            position: relative;
+        }
+
+        /* Tooltip personalizado */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .dark {
+            color-scheme: dark;
+        }
+    </style>
+</head>
+<body class="font-sans min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Simulador de Faturamento JAVA TREINAMENTOS</h1>
+                <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-800 dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" class="dark:hidden" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" class="hidden dark:block" />
+                    </svg>
+                </button>
+            </div>
+            <p class="mt-2 text-gray-600 dark:text-gray-300">
+                Ferramenta educacional para simular o faturamento de internações hospitalares de curta duração (≤ 4 dias).
+            </p>
+            <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                <p class="text-blue-800 dark:text-blue-200 text-sm">
+                    <strong>Importante:</strong> Esta é uma simulação educacional. 
+                    Para fins profissionais, sempre consulte as tabelas oficiais e atualizadas.
+                    <br>
+                    <strong>Data de referência das tabelas utilizadas:</strong> 04/2025
+                </p>
+            </div>
+        </header>
+
+        <div class="flex flex-col md:flex-row mb-6 gap-2 text-sm">
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center step-active mr-2" id="step1Circle">1</div>
+                <span class="text-gray-800 dark:text-white">Dados da Internação</span>
+            </div>
+            <div class="flex items-center md:ml-4">
+                <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center step-inactive mr-2" id="step2Circle">2</div>
+                <span class="text-gray-800 dark:text-white">Procedimentos</span>
+            </div>
+            <div class="flex items-center md:ml-4">
+                <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center step-inactive mr-2" id="step3Circle">3</div>
+                <span class="text-gray-800 dark:text-white">Materiais e Medicamentos</span>
+            </div>
+            <div class="flex items-center md:ml-4">
+                <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center step-inactive mr-2" id="step4Circle">4</div>
+                <span class="text-gray-800 dark:text-white">Resumo da Conta</span>
+            </div>
+        </div>
+
+        <!-- Formulário de simulação -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8 transition-colors duration-300">
+            <!-- Tab 1: Dados da Internação -->
+            <div id="tab1" class="tab-transition tab-visible">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">1. Dados da Internação</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="admissionDate" class="block text-gray-700 dark:text-gray-300 mb-2">
+                            Data e Hora de Admissão
+                        </label>
+                        <input type="datetime-local" id="admissionDate" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label for="dischargeDate" class="block text-gray-700 dark:text-gray-300 mb-2">
+                            Data e Hora de Alta
+                        </label>
+                        <input type="datetime-local" id="dischargeDate" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <label for="diaryCalculationRule" class="block text-gray-700 dark:text-gray-300 mb-2">
+                        Regra de Cálculo de Diárias
+                        <span class="tooltip ml-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="tooltip-text">
+                                Não há informação oficial pública sobre a regra para cálculo de diárias.
+                            </span>
+                        </span>
+                    </label>
+                    <select id="diaryCalculationRule" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="complete">Diária completa no dia da alta</option>
+                        <option value="half">Meia diária se alta antes do meio-dia</option>
+                        <option value="none">Não cobrar o dia da alta</option>
+                    </select>
+                </div>
+                
+                <div class="mt-6">
+                    <label for="accommodationType" class="block text-gray-700 dark:text-gray-300 mb-2">
+                        Tipo de Acomodação
+                    </label>
+                    <select id="accommodationType" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="60000109">DIÁRIA DE ENFERMARIA COM BANHEIRO PRIVATIVO (R$ 161,00)</option>
+                        <option value="60000303">DIÁRIA DE APARTAMENTO SIMPLES (R$ 229,00)</option>
+                        <option value="60000400">DIÁRIA DE UTI ADULTO GERAL (R$ 563,00)</option>
+                    </select>
+                </div>
+                
+                <div class="mt-6">
+                    <label for="diagnosis" class="block text-gray-700 dark:text-gray-300 mb-2">
+                        Diagnóstico Principal (CID-10)
+                    </label>
+                    <input type="text" id="diagnosis" placeholder="Ex: J18.9 (Pneumonia não especificada)" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="flex justify-end mt-8">
+                    <button id="nextToTab2" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300">
+                        Próximo
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Tab 2: Procedimentos -->
+            <div id="tab2" class="tab-transition tab-hidden">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">2. Procedimentos Médicos</h2>
+                
+                <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                    <p class="text-blue-800 dark:text-blue-200 text-sm">
+                        Selecione os procedimentos realizados durante a internação. Para cada procedimento, 
+                        indique se houve anestesia e o número de auxiliares quando aplicável.
+                    </p>
+                </div>
+                
+                <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-6">
+                    <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                        <div class="flex-1">
+                            <label for="procedureSelect" class="block text-gray-700 dark:text-gray-300 mb-2">
+                                Procedimento
+                            </label>
+                            <select id="procedureSelect" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Selecione um procedimento</option>
+                                <option value="31301053|456.52|2|3">APENDICECTOMIA VIDEOLAPAROSCÓPICA (R$ 456,52 - PA 3)</option>
+                                <option value="31003079|237.83|1|2">DRENAGEM DE ABSCESSO PERITONEAL (R$ 237,83 - PA 2)</option>
+                                <option value="31403069|440.73|1|3">COLECISTECTOMIA VIDEOLAPAROSCÓPICA (R$ 440,73 - PA 3)</option>
+                                <option value="40813045|332.59|1|2">HERNIORRAFIA INGUINAL (UNILATERAL) (R$ 332,59 - PA 2)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="anesthesia" class="block text-gray-700 dark:text-gray-300 mb-2">
+                                Anestesia
+                            </label>
+                            <select id="anesthesia" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="1">Sim</option>
+                                <option value="0">Não</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="auxiliaries" class="block text-gray-700 dark:text-gray-300 mb-2">
+                                Nº de Auxiliares
+                            </label>
+                            <select id="auxiliaries" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex items-end">
+                            <button id="addProcedure" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-300">
+                                Adicionar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                        <thead>
+                            <tr class="bg-gray-100 dark:bg-gray-700">
+                                <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Código</th>
+                                <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Descrição</th>
+                                <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Valor Proc.</th>
+                                <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Anestesia</th>
+                                <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Auxiliares</th>
+                                <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Total</th>
+                                <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="proceduresList">
+                            <!-- Procedimentos serão adicionados aqui via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-6">
+                    <label for="medicalVisits" class="block text-gray-700 dark:text-gray-300 mb-2">
+                        Número de Visitas Médicas
+                        <span class="tooltip ml-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="tooltip-text">
+                                Geralmente cobradas pelo médico e não pelo hospital
+                            </span>
+                        </span>
+                    </label>
+                    <input type="number" id="medicalVisits" min="0" value="0" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="flex justify-between mt-8">
+                    <button id="backToTab1" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-300">
+                        Voltar
+                    </button>
+                    <button id="nextToTab3" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300">
+                        Próximo
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Tab 3: Materiais e Medicamentos -->
+            <div id="tab3" class="tab-transition tab-hidden">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">3. Materiais e Medicamentos</h2>
+                
+                <div class="mb-6">
+                    <div class="tabs flex border-b">
+                        <button id="tabMaterials" class="px-4 py-2 mr-2 focus:outline-none border-b-2 border-blue-500 text-blue-600 dark:text-blue-400">Materiais</button>
+                        <button id="tabMedicines" class="px-4 py-2 mr-2 focus:outline-none border-b-2 border-transparent text-gray-600 dark:text-gray-400">Medicamentos</button>
+                    </div>
+                    
+                    <!-- Materiais Tab Content -->
+                    <div id="materialsContent" class="py-4">
+                        <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-6">
+                            <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                                <div class="flex-1">
+                                    <label for="materialSelect" class="block text-gray-700 dark:text-gray-300 mb-2">
+                                        Material
+                                    </label>
+                                    <select id="materialSelect" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">Selecione um material</option>
+                                        <option value="80015058|19517|SERINGA DESCARTÁVEL SEM AGULHA 10 ML BICO LUER|0.4343|false">SERINGA DESCARTÁVEL SEM AGULHA 10 ML BICO LUER (R$ 0,43)</option>
+                                        <option value="80015058|19525|SERINGA DESCARTÁVEL SEM AGULHA 20 ML BICO LUER|0.5956|false">SERINGA DESCARTÁVEL SEM AGULHA 20 ML BICO LUER (R$ 0,60)</option>
+                                        <option value="80015015|5998|EQUIPO MACROGOTAS SIMPLES|2.2912|false">EQUIPO MACROGOTAS SIMPLES (R$ 2,29)</option>
+                                        <option value="80015007|35|CATETER INTRAVENOSO PERIFÉRICO Nº 22|3.7662|false">CATETER INTRAVENOSO PERIFÉRICO Nº 22 (R$ 3,77)</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="materialQty" class="block text-gray-700 dark:text-gray-300 mb-2">
+                                        Quantidade
+                                    </label>
+                                    <input type="number" id="materialQty" min="1" value="1" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                
+                                <div>
+                                    <label for="materialAuth" class="block text-gray-700 dark:text-gray-300 mb-2">
+                                        Autorização (Simulada)
+                                    </label>
+                                    <select id="materialAuth" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="true">Autorizado</option>
+                                        <option value="false">Não Autorizado</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="flex items-end">
+                                    <button id="addMaterial" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-300">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-gray-700">
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Código</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Descrição</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Valor Unit.</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Qtd</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Total</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="materialsList">
+                                    <!-- Materiais serão adicionados aqui via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Medicamentos Tab Content -->
+                    <div id="medicinesContent" class="py-4 hidden">
+                        <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-6">
+                            <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                                <div class="flex-1">
+                                    <label for="medicineSelect" class="block text-gray-700 dark:text-gray-300 mb-2">
+                                        Medicamento
+                                    </label>
+                                    <select id="medicineSelect" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">Selecione um medicamento</option>
+                                        <option value="90501500|5268|DIPIRONA SÓDICA 500 MG/ML SOL INJ 2 ML|0.7143|false">DIPIRONA SÓDICA 500 MG/ML SOL INJ 2 ML (R$ 0,71)</option>
+                                        <option value="90516036|4245|CLORETO DE SÓDIO 0,9% SOL INJ 10 ML|0.5667|false">CLORETO DE SÓDIO 0,9% SOL INJ 10 ML (R$ 0,57)</option>
+                                        <option value="90516036|20075|CLORETO DE SÓDIO 0,9 % SOL INJ BOLSA 500ML|3.7714|false">CLORETO DE SÓDIO 0,9 % SOL INJ BOLSA 500ML (R$ 3,77)</option>
+                                        <option value="90516281|20074|GLICOSE 5% SOL INJ SIST FECH FR PLAS TRANS 500 ML|3.8000|false">GLICOSE 5% SOL INJ SIST FECH FR PLAS TRANS 500 ML (R$ 3,80)</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="medicineQty" class="block text-gray-700 dark:text-gray-300 mb-2">
+                                        Quantidade
+                                    </label>
+                                    <input type="number" id="medicineQty" min="1" value="1" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                
+                                <div>
+                                    <label for="medicineAuth" class="block text-gray-700 dark:text-gray-300 mb-2">
+                                        Autorização (Simulada)
+                                    </label>
+                                    <select id="medicineAuth" class="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="true">Autorizado</option>
+                                        <option value="false">Não Autorizado</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="flex items-end">
+                                    <button id="addMedicine" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-300">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-gray-700">
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Código</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Descrição</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Valor Unit.</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Qtd</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Total</th>
+                                        <th class="py-3 px-4 text-left text-gray-700 dark:text-white">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="medicinesList">
+                                    <!-- Medicamentos serão adicionados aqui via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between mt-8">
+                    <button id="backToTab2" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-300">
+                        Voltar
+                    </button>
+                    <button id="nextToTab4" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300">
+                        Calcular Conta
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Tab 4: Resumo da Conta -->
+            <div id="tab4" class="tab-transition tab-hidden">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">4. Resumo da Conta</h2>
+                
+                <div id="loadingState" class="py-10 text-center">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    <p class="mt-2 text-gray-600 dark:text-gray-300">Calculando a conta...</p>
+                </div>
+                
+                <div id="billingResult" class="hidden">
+                    <div class="flex flex-col md:flex-row mb-6 gap-6">
+                        <div class="md:w-1/2 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <h3 class="font-semibold mb-2 text-gray-800 dark:text-white">Dados da Internação</h3>
+                            <div class="space-y-2 text-gray-700 dark:text-gray-300">
+                                <p><strong>Período:</strong> <span id="summaryPeriod"></span></p>
+                                <p><strong>Permanência:</strong> <span id="summaryStay"></span></p>
+                                <p><strong>Tipo de Acomodação:</strong> <span id="summaryAccommodation"></span></p>
+                                <p><strong>Diagnóstico:</strong> <span id="summaryDiagnosis"></span></p>
+                            </div>
+                        </div>
+                        <div class="md:w-1/2 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <h3 class="font-semibold mb-2 text-gray-800 dark:text-white">Informações Adicionais</h3>
+                            <div class="space-y-2 text-gray-700 dark:text-gray-300">
+                                <p><strong>Regra de Cálculo de Diárias:</strong> <span id="summaryRule"></span></p>
+                                <p><strong>Tabelas de Referência:</strong> IPASGO Saúde 04/2025</p>
+                                <p><strong>Observação:</strong> Esta simulação representa a conta do hospital. Os honorários médicos são geralmente faturados separadamente.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="font-semibold mt-6 mb-3 text-gray-800 dark:text-white">Detalhamento da Conta</h3>
+                    
+                    <!-- Diárias -->
+                    <div class="mb-4">
+                        <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-2">1. Diárias</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-gray-700">
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Código</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Descrição</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Valor Unit.</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Qtd</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="diariesSummary">
+                                    <!-- Diárias serão adicionadas aqui via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Procedimentos -->
+                    <div class="mb-4">
+                        <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-2">2. Procedimentos</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-gray-700">
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Código</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Descrição</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Valor Proc.</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Anestesia</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Auxiliares</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="proceduresSummary">
+                                    <!-- Procedimentos serão adicionados aqui via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Taxas -->
+                    <div class="mb-4">
+                        <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-2">3. Taxas Hospitalares</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-gray-700">
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Código</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Descrição</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Valor Unit.</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Qtd</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="feesSummary">
+                                    <!-- Taxas serão adicionadas aqui via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Materiais -->
+                    <div class="mb-4">
+                        <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-2">4. Materiais</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-gray-700">
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Código</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Descrição</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Valor Unit.</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Qtd</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Total</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="materialsSummary">
+                                    <!-- Materiais serão adicionados aqui via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Medicamentos -->
+                    <div class="mb-4">
+                        <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-2">5. Medicamentos</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-gray-700">
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Código</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Descrição</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Valor Unit.</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Qtd</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Total</th>
+                                        <th class="py-2 px-4 text-left text-gray-700 dark:text-white">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="medicinesSummary">
+                                    <!-- Medicamentos serão adicionados aqui via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Resumo de Valores -->
+                    <div class="mt-8 bg-blue-50 dark:bg-blue-900 p-4 rounded-lg">
+                        <h3 class="font-semibold mb-3 text-gray-800 dark:text-white">Resumo de Valores</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <table class="min-w-full">
+                                    <tbody class="text-gray-700 dark:text-gray-300">
+                                        <tr>
+                                            <td class="py-1">Diárias:</td>
+                                            <td class="py-1 text-right font-medium" id="totalDiaries">R$ 0,00</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1">Procedimentos:</td>
+                                            <td class="py-1 text-right font-medium" id="totalProcedures">R$ 0,00</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1">Taxas Hospitalares:</td>
+                                            <td class="py-1 text-right font-medium" id="totalFees">R$ 0,00</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div>
+                                <table class="min-w-full">
+                                    <tbody class="text-gray-700 dark:text-gray-300">
+                                        <tr>
+                                            <td class="py-1">Materiais:</td>
+                                            <td class="py-1 text-right font-medium" id="totalMaterials">R$ 0,00</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1">Medicamentos:</td>
+                                            <td class="py-1 text-right font-medium" id="totalMedicines">R$ 0,00</td>
+                                        </tr>
+                                        <tr class="border-t border-gray-300 dark:border-gray-600">
+                                            <td class="py-2 font-semibold">TOTAL GERAL:</td>
+                                            <td class="py-2 text-right font-bold text-lg" id="grandTotal">R$ 0,00</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Possíveis Glosas -->
+                    <div id="possibleGlosas" class="mt-6 p-4 bg-red-50 dark:bg-red-900 rounded-lg hidden">
+                        <h3 class="font-semibold mb-3 text-red-800 dark:text-red-300">Atenção: Possíveis Glosas</h3>
+                        <p class="text-red-700 dark:text-red-300">
+                            Foram identificados itens sem autorização prévia que podem ser glosados. 
+                            Verifique os itens marcados com "Não Autorizado" nas tabelas acima.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between mt-8">
+                    <button id="backToTab3" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-300">
+                        Voltar
+                    </button>
+                    <button id="restartSimulation" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-300">
+                        Nova Simulação
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="text-center text-gray-600 dark:text-gray-400 text-sm mt-8">
+            <p>Simulador de Faturamento JAVA TREINAMENTOS - Versão 1.0</p>
+            <p class="mt-1">Desenvolvido para fins educacionais. Para mais informações https://www.instagram.com/java.treinamentos/.</p>
+            <p class="mt-1">Esta é uma ferramenta de simulação. Para o faturamento real, consulte as tabelas e normativas oficiais e atualizadas.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Variáveis para armazenar os dados da simulação
+        const simulation = {
+            procedures: [],
+            materials: [],
+            medicines: [],
+            accommodation: null,
+            admissionDate: null,
+            dischargeDate: null,
+            diaryRule: 'complete',
+            diagnosis: '',
+            medicalVisits: 0,
+            // Tabelas de referência
+            tables: {
+                // Taxas de sala cirúrgica por porte anestésico
+                surgicalRoomFees: {
+                    1: { code: '60023104', description: 'TAXA DE SALA CIRÚRGICA, PORTE ANESTÉSICO 1', value: 157.53 },
+                    2: { code: '60023112', description: 'TAXA DE SALA CIRÚRGICA, PORTE ANESTÉSICO 2', value: 236.29 },
+                    3: { code: '60023120', description: 'TAXA DE SALA CIRÚRGICA, PORTE ANESTÉSICO 3', value: 315.05 },
+                    4: { code: '60023139', description: 'TAXA DE SALA CIRÚRGICA, PORTE ANESTÉSICO 4', value: 393.81 },
+                    5: { code: '60023147', description: 'TAXA DE SALA CIRÚRGICA, PORTE ANESTÉSICO 5', value: 472.57 },
+                    6: { code: '60023155', description: 'TAXA DE SALA CIRÚRGICA, PORTE ANESTÉSICO 6', value: 551.33 },
+                    7: { code: '60023163', description: 'TAXA DE SALA CIRÚRGICA, PORTE ANESTÉSICO 7', value: 630.09 },
+                },
+                // Valor de referência para visita médica
+                medicalVisit: { code: '10102019', description: 'VISITA HOSPITALAR', value: 25.0 },
+                // Custo base dos auxiliares (% do valor do procedimento)
+                auxiliaryValue: 0.3, // 30% do valor do procedimento
+                // Taxa de anestesista (% do valor do procedimento)
+                anesthesistValue: 0.3 // 30% do valor do procedimento
+            }
+        };
+
+        // Referência das regras de cálculo de diárias
+        const diaryRules = {
+            'complete': 'Cobra diária completa no dia da alta',
+            'half': 'Cobra meia diária se alta antes do meio-dia',
+            'none': 'Não cobra o dia da alta'
+        };
+
+        // Referência dos tipos de acomodação
+        const accommodationTypes = {
+            '60000109': { description: 'DIÁRIA DE ENFERMARIA COM BANHEIRO PRIVATIVO', value: 161.00 },
+            '60000303': { description: 'DIÁRIA DE APARTAMENTO SIMPLES', value: 229.00 },
+            '60000400': { description: 'DIÁRIA DE UTI ADULTO GERAL', value: 563.00 }
+        };
+
+        // Funções de Utilidade
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+        }
+
+        function formatDate(date) {
+            if (!date) return '';
+            return new Intl.DateTimeFormat('pt-BR', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            }).format(new Date(date));
+        }
+
+        // Cálculo de permanência (diárias)
+        function calculateStay(admissionDate, dischargeDate, rule) {
+            if (!admissionDate || !dischargeDate) return 0;
+            
+            const admission = new Date(admissionDate);
+            const discharge = new Date(dischargeDate);
+            
+            // Diferença em dias
+            const diffTime = discharge.getTime() - admission.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            // Ajuste conforme regra selecionada
+            if (rule === 'none') {
+                return Math.max(0, diffDays - 1); // Não cobra o dia da alta
+            } else if (rule === 'half' && discharge.getHours() < 12) {
+                return diffDays - 0.5; // Meia diária se alta antes do meio-dia
+            } else {
+                return diffDays; // Cobra o dia da alta completo
+            }
+        }
+
+        // Navegação entre abas
+        function showTab(tabId) {
+            const tabs = ['tab1', 'tab2', 'tab3', 'tab4'];
+            tabs.forEach(tab => {
+                const tabElement = document.getElementById(tab);
+                if (tab === tabId) {
+                    tabElement.classList.remove('tab-hidden');
+                    tabElement.classList.add('tab-visible');
+                } else {
+                    tabElement.classList.remove('tab-visible');
+                    tabElement.classList.add('tab-hidden');
+                }
+            });
+            
+            // Atualiza os círculos de passo
+            const currentStep = tabs.indexOf(tabId) + 1;
+            for (let i = 1; i <= 4; i++) {
+                const circleElement = document.getElementById(`step${i}Circle`);
+                if (i <= currentStep) {
+                    circleElement.classList.remove('step-inactive');
+                    circleElement.classList.add('step-active');
+                } else {
+                    circleElement.classList.remove('step-active');
+                    circleElement.classList.add('step-inactive');
+                }
+            }
+        }
+
+        // Funções para adicionar itens às listas
+        function addProcedure() {
+            const procedureSelect = document.getElementById('procedureSelect');
+            const anesthesiaSelect = document.getElementById('anesthesia');
+            const auxiliariesSelect = document.getElementById('auxiliaries');
+            
+            if (!procedureSelect.value) return;
+            
+            const [code, value, maxAuxiliaries, anesthesiaLevel] = procedureSelect.value.split('|');
+            const procedureValue = parseFloat(value);
+            const useAnesthesia = anesthesiaSelect.value === '1';
+            const auxiliaries = parseInt(auxiliariesSelect.value);
+            const procedureLabel = procedureSelect.options[procedureSelect.selectedIndex].text;
+            
+            // Calcula valores
+            const anesthesiaValue = useAnesthesia ? procedureValue * simulation.tables.anesthesistValue : 0;
+            const auxiliariesValue = auxiliaries > 0 ? procedureValue * simulation.tables.auxiliaryValue * auxiliaries : 0;
+            const totalValue = procedureValue + anesthesiaValue + auxiliariesValue;
+            
+            // Adiciona à lista de procedimentos
+            const procedure = {
+                code,
+                description: procedureLabel.split(' (')[0],
+                value: procedureValue,
+                anesthesia: anesthesiaValue,
+                anesthesiaLevel: parseInt(anesthesiaLevel),
+                useAnesthesia: useAnesthesia,
+                auxiliaries: auxiliaries,
+                auxiliariesValue: auxiliariesValue,
+                total: totalValue
+            };
+            
+            simulation.procedures.push(procedure);
+            updateProceduresList();
+        }
+
+        function addMaterial() {
+            const materialSelect = document.getElementById('materialSelect');
+            const materialQty = document.getElementById('materialQty');
+            const materialAuth = document.getElementById('materialAuth');
+            
+            if (!materialSelect.value) return;
+            
+            const [codeTuss, codeOwn, description, value, needsAuth] = materialSelect.value.split('|');
+            const materialValue = parseFloat(value);
+            const quantity = parseInt(materialQty.value);
+            const authorized = materialAuth.value === 'true';
+            const totalValue = materialValue * quantity;
+            
+            // Adiciona à lista de materiais
+            const material = {
+                codeTuss,
+                codeOwn,
+                description,
+                value: materialValue,
+                quantity,
+                total: totalValue,
+                needsAuth: needsAuth === 'true',
+                authorized
+            };
+            
+            simulation.materials.push(material);
+            updateMaterialsList();
+        }
+
+        function addMedicine() {
+            const medicineSelect = document.getElementById('medicineSelect');
+            const medicineQty = document.getElementById('medicineQty');
+            const medicineAuth = document.getElementById('medicineAuth');
+            
+            if (!medicineSelect.value) return;
+            
+            const [codeTuss, codeOwn, description, value, needsAuth] = medicineSelect.value.split('|');
+            const medicineValue = parseFloat(value);
+            const quantity = parseInt(medicineQty.value);
+            const authorized = medicineAuth.value === 'true';
+            const totalValue = medicineValue * quantity;
+            
+            // Adiciona à lista de medicamentos
+            const medicine = {
+                codeTuss,
+                codeOwn,
+                description,
+                value: medicineValue,
+                quantity,
+                total: totalValue,
+                needsAuth: needsAuth === 'true',
+                authorized
+            };
+            
+            simulation.medicines.push(medicine);
+            updateMedicinesList();
+        }
+
+        // Funções para atualizar listas
+        function updateProceduresList() {
+            const proceduresList = document.getElementById('proceduresList');
+            proceduresList.innerHTML = '';
+            
+            simulation.procedures.forEach((procedure, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${procedure.code}</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${procedure.description}</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${formatCurrency(procedure.value)}</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${formatCurrency(procedure.anesthesia)}</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${procedure.auxiliaries} (${formatCurrency(procedure.auxiliariesValue)})</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300 font-semibold">${formatCurrency(procedure.total)}</td>
+                    <td class="py-2 px-4">
+                        <button class="text-red-600 hover:text-red-800" onclick="removeProcedure(${index})">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </td>
+                `;
+                proceduresList.appendChild(row);
+            });
+        }
+
+        function updateMaterialsList() {
+            const materialsList = document.getElementById('materialsList');
+            materialsList.innerHTML = '';
+            
+            simulation.materials.forEach((material, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${material.codeTuss}</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${material.description}</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${formatCurrency(material.value)}</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${material.quantity}</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300 font-semibold">${formatCurrency(material.total)}</td>
+                    <td class="py-2 px-4">
+                        <button class="text-red-600 hover:text-red-800" onclick="removeMaterial(${index})">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </td>
+                `;
+                materialsList.appendChild(row);
+            });
+        }
+
+        function updateMedicinesList() {
+            const medicinesList = document.getElementById('medicinesList');
+            medicinesList.innerHTML = '';
+            
+            simulation.medicines.forEach((medicine, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${medicine.codeTuss}</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${medicine.description}</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${formatCurrency(medicine.value)}</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${medicine.quantity}</td>
+                    <td class="py-2 px-4 text-gray-700 dark:text-gray-300 font-semibold">${formatCurrency(medicine.total)}</td>
+                    <td class="py-2 px-4">
+                        <button class="text-red-600 hover:text-red-800" onclick="removeMedicine(${index})">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </td>
+                `;
+                medicinesList.appendChild(row);
+            });
+        }
+
+        // Funções para remover itens das listas
+        function removeProcedure(index) {
+            simulation.procedures.splice(index, 1);
+            updateProceduresList();
+        }
+
+        function removeMaterial(index) {
+            simulation.materials.splice(index, 1);
+            updateMaterialsList();
+        }
+
+        function removeMedicine(index) {
+            simulation.medicines.splice(index, 1);
+            updateMedicinesList();
+        }
+
+        // Cálculo da conta final
+        function calculateBill() {
+            // Verificação adicional de dados necessários
+            if (!simulation.admissionDate || !simulation.dischargeDate || !simulation.accommodation) {
+                alert('Dados incompletos para calcular a conta. Por favor, verifique os dados da internação.');
+                showTab('tab1');
+                return;
+            }
+            
+            // Mostrar estado de carregamento
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('billingResult').classList.add('hidden');
+            
+            // Processar após pequeno delay para permitir renderização do loading state
+            setTimeout(() => {
+                // Obter dados básicos da internação
+                const accommodationCode = simulation.accommodation;
+                const accommodationInfo = accommodationTypes[accommodationCode];
+                const stayDays = calculateStay(simulation.admissionDate, simulation.dischargeDate, simulation.diaryRule);
+                
+                // Calcular custos de diárias
+                const dailyCost = accommodationInfo.value * stayDays;
+                
+                // Calcular taxas de sala cirúrgica (com base no maior porte anestésico)
+                let highestAnesthesiaLevel = 0;
+                let feesTotal = 0;
+                
+                simulation.procedures.forEach(proc => {
+                    if (proc.useAnesthesia && proc.anesthesiaLevel > highestAnesthesiaLevel) {
+                        highestAnesthesiaLevel = proc.anesthesiaLevel;
+                    }
+                });
+                
+                if (highestAnesthesiaLevel > 0) {
+                    const surgicalRoomFee = simulation.tables.surgicalRoomFees[highestAnesthesiaLevel];
+                    feesTotal = surgicalRoomFee.value;
+                }
+                
+                // Calcular total de procedimentos
+                const proceduresTotal = simulation.procedures.reduce((sum, proc) => sum + proc.total, 0);
+                
+                // Calcular total de materiais
+                const materialsTotal = simulation.materials.reduce((sum, mat) => {
+                    // Somente considerar materiais autorizados
+                    if (!mat.needsAuth || mat.authorized) {
+                        return sum + mat.total;
+                    }
+                    return sum;
+                }, 0);
+                
+                // Calcular total de medicamentos
+                const medicinesTotal = simulation.medicines.reduce((sum, med) => {
+                    // Somente considerar medicamentos autorizados
+                    if (!med.needsAuth || med.authorized) {
+                        return sum + med.total;
+                    }
+                    return sum;
+                }, 0);
+                
+                // Verificar se há itens não autorizados
+                const hasUnauthorizedItems = simulation.materials.some(m => m.needsAuth && !m.authorized) || 
+                                             simulation.medicines.some(m => m.needsAuth && !m.authorized);
+                
+                // Calcular total geral
+                const grandTotal = dailyCost + proceduresTotal + feesTotal + materialsTotal + medicinesTotal;
+                
+                // Atualizar resumo da internação
+                document.getElementById('summaryPeriod').textContent = `${formatDate(simulation.admissionDate)} a ${formatDate(simulation.dischargeDate)}`;
+                document.getElementById('summaryStay').textContent = `${stayDays} ${stayDays === 1 ? 'dia' : 'dias'}`;
+                document.getElementById('summaryAccommodation').textContent = accommodationInfo.description;
+                document.getElementById('summaryDiagnosis').textContent = simulation.diagnosis || 'Não informado';
+                document.getElementById('summaryRule').textContent = diaryRules[simulation.diaryRule];
+                
+                // Atualizar tabela de diárias
+                const diariesSummary = document.getElementById('diariesSummary');
+                diariesSummary.innerHTML = `
+                    <tr>
+                        <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${accommodationCode}</td>
+                        <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${accommodationInfo.description}</td>
+                        <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${formatCurrency(accommodationInfo.value)}</td>
+                        <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${stayDays}</td>
+                        <td class="py-2 px-4 text-gray-700 dark:text-gray-300 font-semibold">${formatCurrency(dailyCost)}</td>
+                    </tr>
+                `;
+                
+                // Atualizar tabela de procedimentos
+                const proceduresSummary = document.getElementById('proceduresSummary');
+                proceduresSummary.innerHTML = '';
+                
+                if (simulation.procedures.length === 0) {
+                    proceduresSummary.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="py-2 px-4 text-gray-500 dark:text-gray-400 text-center">Nenhum procedimento adicionado</td>
+                        </tr>
+                    `;
+                } else {
+                    simulation.procedures.forEach(proc => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${proc.code}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${proc.description}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${formatCurrency(proc.value)}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${formatCurrency(proc.anesthesia)}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${proc.auxiliaries} (${formatCurrency(proc.auxiliariesValue)})</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300 font-semibold">${formatCurrency(proc.total)}</td>
+                        `;
+                        proceduresSummary.appendChild(row);
+                    });
+                }
+                
+                // Atualizar tabela de taxas
+                const feesSummary = document.getElementById('feesSummary');
+                feesSummary.innerHTML = '';
+                
+                if (highestAnesthesiaLevel > 0) {
+                    const surgicalRoomFee = simulation.tables.surgicalRoomFees[highestAnesthesiaLevel];
+                    feesSummary.innerHTML = `
+                        <tr>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${surgicalRoomFee.code}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${surgicalRoomFee.description}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${formatCurrency(surgicalRoomFee.value)}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">1</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300 font-semibold">${formatCurrency(surgicalRoomFee.value)}</td>
+                        </tr>
+                    `;
+                } else {
+                    feesSummary.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="py-2 px-4 text-gray-500 dark:text-gray-400 text-center">Nenhuma taxa aplicável</td>
+                        </tr>
+                    `;
+                }
+                
+                // Atualizar tabela de materiais
+                const materialsSummary = document.getElementById('materialsSummary');
+                materialsSummary.innerHTML = '';
+                
+                if (simulation.materials.length === 0) {
+                    materialsSummary.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="py-2 px-4 text-gray-500 dark:text-gray-400 text-center">Nenhum material adicionado</td>
+                        </tr>
+                    `;
+                } else {
+                    simulation.materials.forEach(mat => {
+                        const authStatus = mat.needsAuth ? 
+                            (mat.authorized ? 
+                                '<span class="text-green-600 dark:text-green-400">Autorizado</span>' : 
+                                '<span class="text-red-600 dark:text-red-400">Não Autorizado</span>'
+                            ) : 'Não Necessária';
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${mat.codeTuss}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${mat.description}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${formatCurrency(mat.value)}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${mat.quantity}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300 font-semibold">${formatCurrency(mat.total)}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${authStatus}</td>
+                        `;
+                        materialsSummary.appendChild(row);
+                    });
+                }
+                
+                // Atualizar tabela de medicamentos
+                const medicinesSummary = document.getElementById('medicinesSummary');
+                medicinesSummary.innerHTML = '';
+                
+                if (simulation.medicines.length === 0) {
+                    medicinesSummary.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="py-2 px-4 text-gray-500 dark:text-gray-400 text-center">Nenhum medicamento adicionado</td>
+                        </tr>
+                    `;
+                } else {
+                    simulation.medicines.forEach(med => {
+                        const authStatus = med.needsAuth ? 
+                            (med.authorized ? 
+                                '<span class="text-green-600 dark:text-green-400">Autorizado</span>' : 
+                                '<span class="text-red-600 dark:text-red-400">Não Autorizado</span>'
+                            ) : 'Não Necessária';
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${med.codeTuss}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${med.description}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${formatCurrency(med.value)}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${med.quantity}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300 font-semibold">${formatCurrency(med.total)}</td>
+                            <td class="py-2 px-4 text-gray-700 dark:text-gray-300">${authStatus}</td>
+                        `;
+                        medicinesSummary.appendChild(row);
+                    });
+                }
+                
+                // Atualizar resumo de valores
+                document.getElementById('totalDiaries').textContent = formatCurrency(dailyCost);
+                document.getElementById('totalProcedures').textContent = formatCurrency(proceduresTotal);
+                document.getElementById('totalFees').textContent = formatCurrency(feesTotal);
+                document.getElementById('totalMaterials').textContent = formatCurrency(materialsTotal);
+                document.getElementById('totalMedicines').textContent = formatCurrency(medicinesTotal);
+                document.getElementById('grandTotal').textContent = formatCurrency(grandTotal);
+                
+                // Mostrar alerta de possíveis glosas se houver itens não autorizados
+                const possibleGlosas = document.getElementById('possibleGlosas');
+                if (hasUnauthorizedItems) {
+                    possibleGlosas.classList.remove('hidden');
+                } else {
+                    possibleGlosas.classList.add('hidden');
+                }
+                
+                // Ocultar estado de carregamento e mostrar resultado
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('billingResult').classList.remove('hidden');
+            }, 800); // Simulação de processamento para melhor UX
+        }
+
+        // Toggle entre abas de Materiais e Medicamentos
+        function setupMaterialsMedicinesTabs() {
+            const tabMaterials = document.getElementById('tabMaterials');
+            const tabMedicines = document.getElementById('tabMedicines');
+            const materialsContent = document.getElementById('materialsContent');
+            const medicinesContent = document.getElementById('medicinesContent');
+            
+            tabMaterials.addEventListener('click', () => {
+                tabMaterials.classList.add('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+                tabMaterials.classList.remove('border-transparent', 'text-gray-600', 'dark:text-gray-400');
+                tabMedicines.classList.remove('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+                tabMedicines.classList.add('border-transparent', 'text-gray-600', 'dark:text-gray-400');
+                
+                materialsContent.classList.remove('hidden');
+                medicinesContent.classList.add('hidden');
+            });
+            
+            tabMedicines.addEventListener('click', () => {
+                tabMedicines.classList.add('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+                tabMedicines.classList.remove('border-transparent', 'text-gray-600', 'dark:text-gray-400');
+                tabMaterials.classList.remove('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+                tabMaterials.classList.add('border-transparent', 'text-gray-600', 'dark:text-gray-400');
+                
+                medicinesContent.classList.remove('hidden');
+                materialsContent.classList.add('hidden');
+            });
+        }
+
+        // Toggle do Modo Escuro
+        function setupDarkMode() {
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            
+            // Verifica se o sistema está configurado para modo escuro
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+            }
+            
+            // Listener para mudanças no modo de cor do sistema
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+                if (event.matches) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            });
+            
+            // Toggle manual do modo escuro
+            darkModeToggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+            });
+        }
+
+        // Inicialização e event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar navegação entre abas
+            document.getElementById('nextToTab2').addEventListener('click', () => {
+                // Capturar dados da primeira aba
+                simulation.admissionDate = document.getElementById('admissionDate').value;
+                simulation.dischargeDate = document.getElementById('dischargeDate').value;
+                simulation.diaryRule = document.getElementById('diaryCalculationRule').value;
+                simulation.accommodation = document.getElementById('accommodationType').value;
+                simulation.diagnosis = document.getElementById('diagnosis').value;
+                
+                // Validar entradas
+                if (!simulation.admissionDate || !simulation.dischargeDate) {
+                    alert('Por favor, preencha as datas de admissão e alta.');
+                    return;
+                }
+                
+                if (new Date(simulation.dischargeDate) <= new Date(simulation.admissionDate)) {
+                    alert('A data de alta deve ser posterior à data de admissão.');
+                    return;
+                }
+                
+                showTab('tab2');
+            });
+            
+            document.getElementById('backToTab1').addEventListener('click', () => {
+                showTab('tab1');
+            });
+            
+            document.getElementById('nextToTab3').addEventListener('click', () => {
+                simulation.medicalVisits = document.getElementById('medicalVisits').value;
+                showTab('tab3');
+            });
+            
+            document.getElementById('backToTab2').addEventListener('click', () => {
+                showTab('tab2');
+            });
+            
+            document.getElementById('nextToTab4').addEventListener('click', () => {
+                // Primeiro mostra a aba 4
+                showTab('tab4');
+                
+                // Depois de um pequeno delay para garantir que a transição da aba foi concluída
+                setTimeout(() => {
+                    // Verifica se há dados básicos para calcular
+                    if (!simulation.admissionDate || !simulation.dischargeDate || !simulation.accommodation) {
+                        alert('Por favor, preencha todos os dados básicos da internação primeiro.');
+                        showTab('tab1');
+                        return;
+                    }
+                    
+                    // Executa o cálculo
+                    calculateBill();
+                }, 50);
+            });
+            
+            document.getElementById('backToTab3').addEventListener('click', () => {
+                showTab('tab3');
+            });
+            
+            document.getElementById('restartSimulation').addEventListener('click', () => {
+                // Resetar a simulação
+                simulation.procedures = [];
+                simulation.materials = [];
+                simulation.medicines = [];
+                
+                // Resetar formulários
+                document.getElementById('proceduresList').innerHTML = '';
+                document.getElementById('materialsList').innerHTML = '';
+                document.getElementById('medicinesList').innerHTML = '';
+                document.getElementById('medicalVisits').value = 0;
+                
+                // Voltar para a primeira aba
+                showTab('tab1');
+            });
+            
+            // Configurar botões de adicionar itens
+            document.getElementById('addProcedure').addEventListener('click', addProcedure);
+            document.getElementById('addMaterial').addEventListener('click', addMaterial);
+            document.getElementById('addMedicine').addEventListener('click', addMedicine);
+            
+            // Configurar abas de materiais e medicamentos
+            setupMaterialsMedicinesTabs();
+            
+            // Configurar modo escuro
+            setupDarkMode();
+            
+            // Expor funções de remoção de itens para o escopo global
+            window.removeProcedure = removeProcedure;
+            window.removeMaterial = removeMaterial;
+            window.removeMedicine = removeMedicine;
+        });
+    </script>
+</body>
+</html>
